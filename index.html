@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+</head>
+<body>
+<h1>Project</h1>
+<h2>Discord sender</h2>
+<button type="button" onclick="startSend()">Start</button>
+<button type="button" onclick="stopSend()">Stop</button>
+<h2>Anti-spam listener</h2>
+<button type="button" onclick="startAntiSpamListen()">Listen</button>
+<button type="button" onclick="stopAntiSpamListen()">Stop Listen</button>
+<p id="demo"></p>
+
+<script>
+
+var sendRepeat;
+var antiSpamRepeat;
+var receivedMessagesInPeriod;
+var requestTimestamp;
+var lastRequestTimestamp = new Date();
+
+function startSend() {
+	sendRepeat = setInterval(send, 100);
+}
+
+function stopSend() {
+	clearInterval(sendRepeat);
+}
+
+function startAntiSpamListen() {
+	antiSpamRepeat = setInterval(listenForSpam, 3000);
+}
+
+function stopAntiSpamListen() {
+	clearInterval(antiSpamRepeat);
+}
+
+function send() {
+	$.ajax({
+  url: "https://discord.com/api/v9/channels/<channel_id>/messages",
+  dataType: 'json',
+  type: 'POST',
+  // Fetch the stored token from localStorage and set in the header
+  headers: {"Authorization": "<session_id>"},
+  data: {"content": "A"},
+  success: function(data) {
+  $("#demo").html(data);
+  }
+  });
+}
+
+function listenForSpam() {
+	requestTimestamp = new Date();
+	$.ajax({
+  url: "https://discord.com/api/v9/channels/<spammer_id>/messages?limit=5",
+  dataType: 'json',
+  type: 'GET',
+  // Fetch the stored token from localStorage and set in the header
+  headers: {"Authorization": "<session_id>"},
+  success: function(data) {
+	receivedMessagesInPeriod = data.filter((x) => x.author.id == "<spammer_id>"
+	&& Date.parse(x.timestamp) >= lastRequestTimestamp && Date.parse(x.timestamp) <= requestTimestamp).length;
+	if(receivedMessagesInPeriod > 3) {
+		muteUser();
+	}
+	lastRequestTimestamp = new Date();
+  }
+  });
+}
+
+function muteUser() {
+	$.ajax({
+  url: "https://discord.com/api/v9/users/@me/guilds/%40me/settings",
+  dataType: 'json',
+  type: 'PATCH',
+  // Fetch the stored token from localStorage and set in the header
+  headers: {"Authorization": "",
+  "Content-Type": "application/json"},
+  data: JSON.stringify({
+    "channel_overrides": {
+        "<spammer_id>": {
+            "muted": true
+        }
+    }
+}),
+  success: function(data) {
+  $("#demo").html(data);
+  }
+  });
+}
+
+</script>
+
+
+
+</body>
+</html>
