@@ -17,12 +17,10 @@
 
 var sendRepeat;
 var antiSpamRepeat;
-var receivedMessagesInPeriod;
-var requestTimestamp;
-var lastRequestTimestamp = new Date();
+
 
 function startSend() {
-	sendRepeat = setInterval(send, 100);
+	sendRepeat = setInterval(send, 3000);
 }
 
 function stopSend() {
@@ -39,11 +37,11 @@ function stopAntiSpamListen() {
 
 function send() {
 	$.ajax({
-  url: "https://discord.com/api/v9/channels/<channel_id>/messages",
+  url: "https://discord.com/api/v9/channels/511863571030999050/messages",
   dataType: 'json',
   type: 'POST',
   // Fetch the stored token from localStorage and set in the header
-  headers: {"Authorization": "<session_id>"},
+  headers: {"Authorization": "NDM4Njk1NTk4MDk5NjYwODAw.G0V8J7._BO4KuK5QmV0IZVDkp8mQ91Ex6j74y9c-_zip4"},
   data: {"content": "A"},
   success: function(data) {
   $("#demo").html(data);
@@ -52,20 +50,21 @@ function send() {
 }
 
 function listenForSpam() {
-	requestTimestamp = new Date();
+  var requestTimestamp = Date.parse(new Date());
 	$.ajax({
-  url: "https://discord.com/api/v9/channels/<spammer_id>/messages?limit=5",
+  url: "https://discord.com/api/v9/channels/1172498802213670964/messages?limit=5",
   dataType: 'json',
   type: 'GET',
   // Fetch the stored token from localStorage and set in the header
-  headers: {"Authorization": "<session_id>"},
+  headers: {"Authorization": "NDM4Njk1NTk4MDk5NjYwODAw.G0V8J7._BO4KuK5QmV0IZVDkp8mQ91Ex6j74y9c-_zip4"},
   success: function(data) {
-	receivedMessagesInPeriod = data.filter((x) => x.author.id == "<spammer_id>"
-	&& Date.parse(x.timestamp) >= lastRequestTimestamp && Date.parse(x.timestamp) <= requestTimestamp).length;
+  console.log(requestTimestamp);
+	var receivedMessagesInPeriod = data.filter((x) => x.author.id == "671991043469869057"
+	&& Date.parse(x.timestamp) >= requestTimestamp - 10000 && Date.parse(x.timestamp) <= requestTimestamp).length;
+	console.log(receivedMessagesInPeriod);
 	if(receivedMessagesInPeriod > 3) {
 		muteUser();
 	}
-	lastRequestTimestamp = new Date();
   }
   });
 }
@@ -76,11 +75,11 @@ function muteUser() {
   dataType: 'json',
   type: 'PATCH',
   // Fetch the stored token from localStorage and set in the header
-  headers: {"Authorization": "",
+  headers: {"Authorization": "NDM4Njk1NTk4MDk5NjYwODAw.GpWcL0.Mvf4u33KL_g_ng9wVdR5qB1ATHC6PFlnBr0PT0",
   "Content-Type": "application/json"},
   data: JSON.stringify({
     "channel_overrides": {
-        "<spammer_id>": {
+        "1172498802213670964": {
             "muted": true
         }
     }
